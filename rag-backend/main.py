@@ -29,6 +29,14 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(api_router)
 
+@app.get("/")
+async def root():
+    return {
+        "name": "RAG API",
+        "status": "healthy",
+        "docs": "/docs"
+    }
+
 @app.get("/health")
 async def health(db: Session = Depends(get_db)):
     try:
