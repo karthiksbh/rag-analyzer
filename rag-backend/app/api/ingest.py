@@ -29,6 +29,12 @@ async def ingest_doc(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+    if len(file_bytes) > settings.max_file_size_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size exceeds the maximum allowed limit of {settings.MAX_FILE_SIZE_MB} MB.",
+        )
+
     # Duplicate check — same filename already indexed for this user
     existing = db.query(Document).filter(
         Document.user_id == user.id,

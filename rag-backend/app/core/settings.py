@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     # Other
     ALLOWED_EXTENSIONS: str = ".pdf,.txt,.md"
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    MAX_FILE_SIZE_MB: int = 5
 
     REACT_APP_URL: str = "http://localhost:5173"
 
@@ -67,5 +68,9 @@ class Settings(BaseSettings):
     @property
     def allowed_origins(self) -> list[str]:
         return list(self.split_list(self.ALLOWED_ORIGINS))
+
+    @property
+    def max_file_size_bytes(self) -> int:
+        return self.MAX_FILE_SIZE_MB * 1024 * 1024
 
 settings = Settings()
