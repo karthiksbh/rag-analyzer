@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 50
     TOP_K:         int = 5
 
+    # ChromaDB
+    CHROMA_HOST: str = "localhost"
+    CHROMA_PORT: int = 8001
+
     # Other
     ALLOWED_EXTENSIONS: str = ".pdf,.txt,.md"
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"

@@ -17,8 +17,10 @@ class RAGClassifier:
     @property
     def collection(self):
         if self._collection is None:
-            logger.debug(f"Connecting to ChromaDB at path: {settings.CHROMA_PATH}")
-            db = chromadb.PersistentClient(path=settings.CHROMA_PATH)
+            db = chromadb.HttpClient(
+                host=settings.CHROMA_HOST,
+                port=settings.CHROMA_PORT,
+            )
             self._collection = db.get_or_create_collection(
                 name="docs",
                 metadata={"hnsw:space": "cosine"},
