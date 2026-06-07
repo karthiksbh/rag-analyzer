@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     # ChromaDB
     CHROMA_HOST: str = "localhost"
     CHROMA_PORT: int = 8001
+    CHROMA_SSL: bool = False
 
     # Other
     ALLOWED_EXTENSIONS: str = ".pdf,.txt,.md"

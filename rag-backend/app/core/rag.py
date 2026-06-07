@@ -20,6 +20,7 @@ class RAGClassifier:
             db = chromadb.HttpClient(
                 host=settings.CHROMA_HOST,
                 port=settings.CHROMA_PORT,
+                ssl=settings.CHROMA_SSL,
             )
             self._collection = db.get_or_create_collection(
                 name="docs",
