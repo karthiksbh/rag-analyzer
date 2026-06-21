@@ -1,78 +1,28 @@
-# =========================
-# Python
-# =========================
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-
-# Virtual Environments
-venv/
+# Env files
 .env
-.env.*
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+venv/
 .venv/
 
-# Python tooling
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
+# Node
+node_modules/
+dist/
 
-# IDEs
+# chroma store
+chroma_store/
+
+# Docker volumes (if bind-mounted locally)
+postgres_data/
+redis_data/
+
+# OS
+.DS_Store
+
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# =========================
-# Backend
-# =========================
-rag-backend/venv/
-rag-backend/__pycache__/
-rag-backend/chroma_store/
-
-# Environment files
-rag-backend/.env
-rag-backend/.env.*
-
-# =========================
-# ChromaDB / Vector Store
-# =========================
-chroma_store/
-*.sqlite3
-*.db
-
-# =========================
-# Frontend (Node/Vite)
-# =========================
-rag-frontend/node_modules/
-rag-frontend/dist/
-rag-frontend/.vite/
-
-# Environment files
-rag-frontend/.env
-rag-frontend/.env.*
-
-# =========================
-# OS Files
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# Build Artifacts
-# =========================
-build/
-dist/
-coverage/
-
-# =========================
-# Misc
-# =========================
-*.bak
-*.tmp
-*.temp

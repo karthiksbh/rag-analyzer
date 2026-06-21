@@ -12,10 +12,11 @@ from app.db.session import get_db
 from app.db.models import User
 from app.core.settings import settings
 
+bearer_scheme = HTTPBearer(auto_error=False)  # auto_error=False so dev-mode can skip it cleanly
 
-bearer_scheme = HTTPBearer()
-
-GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+DEV_USER_EMAIL    = "dev@local.test"
+DEV_USER_GOOGLE_ID = "dev-local-bypass"
+DEV_USER_NAME     = "Local Dev"
 
 def create_jwt(user_id: int) -> str:
     payload = {
@@ -96,15 +97,50 @@ def get_or_create_user(db: Session, google_data: dict) -> User:
     db.refresh(user)
     return user
 
+def get_or_create_dev_user(db: Session) -> User:
+    """
+    Used only when settings.ENVIRONMENT == 'local'.
+    Always returns the same single fake user — no Google OAuth needed.
+    Lets people clone the repo and try the app immediately without
+    setting up Google Cloud credentials.
+    """
+    user = db.query(User).filter(User.google_id == DEV_USER_GOOGLE_ID).first()
+    if user:
+        return user
+
+    user = User(
+        google_id = DEV_USER_GOOGLE_ID,
+        email     = DEV_USER_EMAIL,
+        name      = DEV_USER_NAME,
+        picture   = None,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
     db: Session = Depends(get_db),
 ) -> User:
     """
-    Dependency — extracts and validates the JWT from the Authorization header.
-    Use in any route: user: User = Depends(get_current_user)
+    Dependency used on every protected route.
+
+    In dev mode (settings.ENVIRONMENT == "local"), this bypasses JWT/Google
+    entirely and returns a single hardcoded local user — no token needed.
+    In normal mode, it behaves as before: decode the JWT and look up the user.
     """
+    if settings.ENVIRONMENT == "local":
+        return get_or_create_dev_user(db)
+
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = decode_jwt(credentials.credentials)
     user_id = int(payload["sub"])
 

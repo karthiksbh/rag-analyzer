@@ -1,0 +1,91 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: docmind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-docmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docmind}
+      POSTGRES_DB: ${POSTGRES_DB:-docmind}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-docmind}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: docmind-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./rag-backend
+      dockerfile: Dockerfile
+    container_name: docmind-backend
+    restart: unless-stopped
+    env_file: ./rag-backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-docmind}:${POSTGRES_PASSWORD:-docmind}@postgres:5432/${POSTGRES_DB:-docmind}
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_PATH: /app/chroma_store
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/chroma_store   # shared with worker below
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./rag-backend
+      dockerfile: Dockerfile
+    container_name: docmind-worker
+    restart: unless-stopped
+    command: celery -A app.core.tasks worker --loglevel=info
+    env_file: ./rag-backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-docmind}:${POSTGRES_PASSWORD:-docmind}@postgres:5432/${POSTGRES_DB:-docmind}
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_PATH: /app/chroma_store
+    volumes:
+      - chroma_data:/app/chroma_store   # same volume name = same data, shared with backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./rag-frontend
+      dockerfile: Dockerfile
+    container_name: docmind-frontend
+    restart: unless-stopped
+    env_file: ./rag-frontend/.env
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:

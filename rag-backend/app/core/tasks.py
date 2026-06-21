@@ -1,5 +1,5 @@
 import logging
-
+import hashlib
 from app.core.celery import celery
 from app.core.rag import RAGClassifier
 from app.db.session import SessionLocal
@@ -23,10 +23,13 @@ def ingest_document(self, file_bytes_list: list[int], filename: str, user_id: in
         self.update_state(state="PROGRESS", meta={"filename": filename, "step": "creating embeddings"})
         result = rag.ingest(file_bytes, filename, user_id)
 
+        # get the file hash for the content
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
+
         # Save doc record to Postgres
         db = SessionLocal()
         try:
-            doc = Document(user_id=user_id, filename=filename, chunks=result["chunks"])
+            doc = Document(user_id=user_id, content_hash=file_hash, filename=filename, chunks=result["chunks"])
             db.add(doc)
             db.commit()
         finally:

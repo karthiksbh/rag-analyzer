@@ -1,4 +1,5 @@
 import logging
+import hashlib
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 
@@ -13,7 +14,6 @@ from app.db.models import Document, User
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
-
 
 @router.post("", status_code=202)
 async def ingest_doc(
@@ -35,18 +35,16 @@ async def ingest_doc(
             detail=f"File size exceeds the maximum allowed limit of {settings.MAX_FILE_SIZE_MB} MB.",
         )
 
-    # Duplicate check — same filename already indexed for this user
+    # Duplicate check — same file hash already indexed for this user
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
     existing = db.query(Document).filter(
         Document.user_id == user.id,
-        Document.filename == file.filename,
+        Document.content_hash == file_hash,
     ).first()
 
     if existing:
         logger.warning(f"[ingest] Duplicate upload blocked — user_id={user.id} file='{file.filename}'")
-        raise HTTPException(
-            status_code=409,
-            detail=f"'{file.filename}' is already indexed. Delete it first if you want to re-upload.",
-        )
+        raise HTTPException(status_code=409, detail=f"This exact content is already indexed as '{existing.filename}'.")
 
     logger.info(f"[ingest] Received upload — user_id={user.id} file='{file.filename}' size={len(file_bytes)} bytes")
 

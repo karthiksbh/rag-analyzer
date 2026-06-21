@@ -9,6 +9,9 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    # Environment — set to "local" to enable dev-mode auth bypass (no Google OAuth needed)
+    ENVIRONMENT: str = "local"
+
     # Database config
     DATABASE_URL: str
     DB_POOL_SIZE: int = 5
@@ -45,12 +48,8 @@ class Settings(BaseSettings):
     CHROMA_PATH:   str = "chroma_store"
     CHUNK_SIZE:    int = 500
     CHUNK_OVERLAP: int = 50
+    CHUNK_THRESHOLD: int = 20
     TOP_K:         int = 5
-
-    # ChromaDB
-    CHROMA_HOST: str = "localhost"
-    CHROMA_PORT: int = 8001
-    CHROMA_SSL: bool = False
 
     # Other
     ALLOWED_EXTENSIONS: str = ".pdf,.txt,.md"
@@ -59,7 +58,18 @@ class Settings(BaseSettings):
 
     REACT_APP_URL: str = "http://localhost:5173"
 
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CACHE_TTL: int = 3600   # seconds
+    CACHE_SIMILARITY: float = 0.95 # normalized match threshold
+
+    CHAT_HISTORY_LIMIT: int = 6  # last 6 (user + assistant)
+
     LOG_LEVEL: str = "INFO"
+
+    # dev user details
+    DEV_USER_EMAIL: str = "karthik@test.com"
+    DEV_USER_GOOGLE_ID: str = "dev-local-bypass"
+    DEV_USER_NAME: str ="Karthik"
 
     @property
     def allowed_extensions(self) -> list[str]:
